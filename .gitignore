@@ -162,6 +162,8 @@ test/vcpuconsumer.spec.js
 contracts/eos/vcpuconsumer
 !contracts/eos/CMakeLists.txt
 !contracts/eos/crypconsumer/CMakeLists.txt
+!contracts/eos/crypservice/crypservice.cpp
+!contracts/eos/crypservice/CMakeLists.txt
 !contracts/eos/dappservices/cryp
 nodeos.log
 logs/*
