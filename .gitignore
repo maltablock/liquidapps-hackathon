@@ -160,3 +160,4 @@ test/vcpuconsumer.spec.js
 # Custom
 !contracts/eos/CMakeLists.txt
 !contracts/eos/cryptoconsumer/CMakeLists.txt
+!contracts/eos/dappservices/crypto
