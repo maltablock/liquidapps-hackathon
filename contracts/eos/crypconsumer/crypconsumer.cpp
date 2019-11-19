@@ -1,14 +1,14 @@
-#include "../dappservices/crypto.hpp"
+#include "../dappservices/cryp.hpp"
 
 #define DAPPSERVICES_ACTIONS() \
   XSIGNAL_DAPPSERVICE_ACTION \
-  CRYPTO_DAPPSERVICE_ACTIONS
+  CRYP_DAPPSERVICE_ACTIONS
 
 #define DAPPSERVICE_ACTIONS_COMMANDS() \
-  CRYPTO_SVC_COMMANDS()
+  CRYP_SVC_COMMANDS()
 
 
-#define CONTRACT_NAME() cryptoconsumer
+#define CONTRACT_NAME() crypconsumer
 
 struct input_t {
   uint32_t a;
@@ -30,7 +30,7 @@ CONTRACT_START()
     input_t input;
     input.a = a;
     input.b = b;
-    result_t res = call_crypto_fn<result_t>(name("vvcomdenom"), pack(input),[&]( auto& results ) {
+    result_t res = call_cryp_fn<result_t>(name("vvcomdenom"), pack(input),[&]( auto& results ) {
       eosio::check(results.size() > 1, "not enough results");
       eosio::check(results[0].result.size() > 0, "not enough results1");
       eosio::check(results[1].result.size() > 0, "not enough results2");

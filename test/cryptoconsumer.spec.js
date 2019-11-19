@@ -11,8 +11,8 @@ const deployer = require('../extensions/tools/eos/deployer');
 const { genAllocateDAPPTokens, readVRAMData } = require('../extensions/tools/eos/dapp-services');
 const { getTestContract } = require('../extensions/tools/eos/utils');
 
-var contractCode = 'vcpuconsumer';
-var serviceName = 'vcpu'
+var contractCode = 'crypconsumer';
+var serviceName = 'cryp'
 var ctrt = artifacts.require(`./${contractCode}/`);
 const delay = ms => new Promise(res => setTimeout(res, ms));
 const util = require('util');
@@ -33,16 +33,18 @@ describe(`${contractCode} Contract`, () => {
         console.log(s);
         return s;
     };
-    var account = "vcpuconsumer";
+    var account = "crypconsumer";
     before(done => {
         (async() => {
             try {
+                console.log(`TEST: running before`)
                 var deployedContract = await deployer.deploy(ctrt, account);
                 await genAllocateDAPPTokens(deployedContract, serviceName, "pprovider1", "default");
                 await genAllocateDAPPTokens(deployedContract, serviceName, "pprovider2", "foobar");
                 testcontract = await getTestContract(account);
 
 
+                console.log(`TEST: before done`)
                 done();
             }
             catch (e) {
@@ -54,8 +56,11 @@ describe(`${contractCode} Contract`, () => {
     it('Commom denom', done => {
         (async() => {
             try {
+
+                console.log(`Commom denom: 1`)
                 var owner = getTestAccountName(10);
                 var testAccountKeys = await getCreateAccount(owner);
+                console.log(`Commom denom: 2`)
                 await testcontract.testfn({
                     a: 21,
                     b: 1120000,
@@ -65,6 +70,7 @@ describe(`${contractCode} Contract`, () => {
                     sign: true,
                     keyProvider: [testAccountKeys.active.privateKey],
                 });
+                console.log(`Commom denom: 3`)
                 done();
             }
             catch (e) {

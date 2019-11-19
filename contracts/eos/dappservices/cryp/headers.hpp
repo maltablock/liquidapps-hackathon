@@ -8,7 +8,7 @@
 using std::vector;
 using namespace eosio;
 
-const checksum256 hashDataCrypto(vector<char> data){
+const checksum256 hashDataCRYP(vector<char> data){
     auto buffer = data;
     char* c = (char*) malloc(buffer.size()+1);
     memcpy(c, buffer.data(), buffer.size());
@@ -22,25 +22,25 @@ const checksum256 hashDataCrypto(vector<char> data){
     memcpy(p64 , hash_ret.data(), 32 );
     return checksum256::make_from_word_sequence<uint64_t>(p64[0], p64[1], p64[2], p64[3]);
 }
-struct crypto_provider_result {
+struct cryp_provider_result {
     std::vector<char> result;
     name provider;
 };
-TABLE cryptoentry {
+TABLE crypentry {
    uint64_t                         id;
    std::vector<char>                uri;
-   std::vector<crypto_provider_result>     results;
-   checksum256 hash_key() const { return hashDataCrypto(uri); }
+   std::vector<cryp_provider_result>     results;
+   checksum256 hash_key() const { return hashDataCRYP(uri); }
    uint64_t primary_key()const { return id; }
 };
 
-typedef eosio::multi_index<"cryptoentry"_n, cryptoentry, indexed_by<"byhash"_n, const_mem_fun<cryptoentry, checksum256, &cryptoentry::hash_key>>> cryptoentries_t;
-static void updateCryptoResult(std::vector<char> uri, name provider, std::vector<char> result){  \
+typedef eosio::multi_index<"crypentry"_n, crypentry, indexed_by<"byhash"_n, const_mem_fun<crypentry, checksum256, &crypentry::hash_key>>> crypentries_t;
+static void updateCRYPResult(std::vector<char> uri, name provider, std::vector<char> result){  \
     auto _self = name(current_receiver());
-    cryptoentries_t entries(_self, _self.value);
+    crypentries_t entries(_self, _self.value);
     auto cidx = entries.get_index<"byhash"_n>();
-    auto existing = cidx.find(hashDataCrypto(uri));
-    crypto_provider_result new_result;
+    auto existing = cidx.find(hashDataCRYP(uri));
+    cryp_provider_result new_result;
     new_result.provider = provider;
     new_result.result = result;
     if(existing != cidx.end())
@@ -55,27 +55,27 @@ static void updateCryptoResult(std::vector<char> uri, name provider, std::vector
 }
 
 
-#define CRYPTOFUNC \
+#define CRYPFUNC \
     [[eosio::action]] void
-#define CRYPTOFN_RETURN(result) \
+#define CRYPFN_RETURN(result) \
     { \
         auto packed = pack(result);\
         print(std::string("vrfn:") + fc::base64_encode(std::string(packed.data(),packed.data() + packed.size()))); \
     } while(0)
-#define CRYPTO_DAPPSERVICE_ACTIONS_MORE() \
-TABLE cryptoentry {  \
+#define CRYP_DAPPSERVICE_ACTIONS_MORE() \
+TABLE crypentry {  \
    uint64_t                      id; \
    std::vector<char>             uri; \
-   std::vector<crypto_provider_result>     results; \
-   checksum256 hash_key() const { return hashDataCrypto(uri); }  \
+   std::vector<cryp_provider_result>     results; \
+   checksum256 hash_key() const { return hashDataCRYP(uri); }  \
    uint64_t primary_key()const { return id; }  \
 };  \
-typedef eosio::multi_index<"cryptoentry"_n, cryptoentry, indexed_by<"byhash"_n, const_mem_fun<cryptoentry, checksum256, &cryptoentry::hash_key>>> cryptoentries_t; \
+typedef eosio::multi_index<"crypentry"_n, crypentry, indexed_by<"byhash"_n, const_mem_fun<crypentry, checksum256, &crypentry::hash_key>>> crypentries_t; \
 template<typename Lambda> \
-static std::vector<char> _crypto_extractResults(const cryptoentry& existing, Lambda&& combinator){  \
+static std::vector<char> _cryp_extractResults(const crypentry& existing, Lambda&& combinator){  \
     return combinator(existing.results); \
 } \
-static checksum256 crypto_transaction_id() { \
+static checksum256 cryp_transaction_id() { \
    using namespace eosio; \
    checksum256 h; \
    auto size = transaction_size(); \
@@ -85,31 +85,31 @@ static checksum256 crypto_transaction_id() { \
    return sha256(buf, read); \
 } \
 template<typename Lambda> \
-static std::vector<char> _call_crypto_fn(std::vector<char> uri, std::vector<char> payload, Lambda&& combinator){  \
+static std::vector<char> _call_cryp_fn(std::vector<char> uri, std::vector<char> payload, Lambda&& combinator){  \
     auto _self = name(current_receiver()); \
-    cryptoentries_t entries(_self, _self.value);  \
+    crypentries_t entries(_self, _self.value);  \
     auto cidx = entries.get_index<"byhash"_n>(); \
-    auto existing = cidx.find(hashDataCrypto(uri)); \
+    auto existing = cidx.find(hashDataCRYP(uri)); \
     if(existing == cidx.end()){  \
         SEND_SVC_REQUEST(vrun, uri, payload); \
     } \
     else {\
-        auto results = _crypto_extractResults(*existing, combinator);\
+        auto results = _cryp_extractResults(*existing, combinator);\
         cidx.erase(existing);\
         return results; \
     } \
     return std::vector<char>();\
 }  \
 template<typename RES_T,typename Lambda> \
-static RES_T call_crypto_fn(name action, std::vector<char> payload, Lambda combinator){  \
-    checksum256 trxId = crypto_transaction_id(); \
+static RES_T call_cryp_fn(name action, std::vector<char> payload, Lambda combinator){  \
+    checksum256 trxId = cryp_transaction_id(); \
     auto trxIdp = trxId.data(); \
     std::string trxIdStr(trxIdp, trxIdp + trxId.size()); \
     auto pubTime = tapos_block_prefix(); \
-    auto hashed = hashDataCrypto(payload); \
+    auto hashed = hashDataCRYP(payload); \
     std::string str(hashed.data(), hashed.data() + hashed.size()); \
     auto s = fc::base64_encode(trxIdStr) + "://" + fc::to_string(pubTime) + "://" + action.to_string() + "://" + fc::base64_encode(str);\
     std::vector<char> idUri(s.begin(), s.end()); \
-    auto res = _call_crypto_fn(idUri, payload, combinator); \
+    auto res = _call_cryp_fn(idUri, payload, combinator); \
     return unpack<RES_T>(res); \
 }

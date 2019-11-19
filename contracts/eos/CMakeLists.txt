@@ -44,10 +44,11 @@ ExternalProject_Add(
                BUILD_ALWAYS 1
             )
 
+
 ExternalProject_Add(
-               cryptoservice
-               SOURCE_DIR cryptoservice
-               BINARY_DIR cryptoservice
+               crypservice
+               SOURCE_DIR crypservice
+               BINARY_DIR crypservice
                CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${EOSIO_CDT_ROOT}/lib/cmake/eosio.cdt/EosioWasmToolchain.cmake
                UPDATE_COMMAND ""
                PATCH_COMMAND ""
@@ -57,9 +58,9 @@ ExternalProject_Add(
             )
 
 ExternalProject_Add(
-               cryptoconsumer
-               SOURCE_DIR cryptoconsumer
-               BINARY_DIR cryptoconsumer
+               crypconsumer
+               SOURCE_DIR crypconsumer
+               BINARY_DIR crypconsumer
                CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${EOSIO_CDT_ROOT}/lib/cmake/eosio.cdt/EosioWasmToolchain.cmake
                UPDATE_COMMAND ""
                PATCH_COMMAND ""

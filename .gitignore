@@ -23,6 +23,7 @@ models/boxmaps/50-zeusrepoeos.json
 contracts/eos/compile_commands.json
 contracts/eos/*service/*service.cpp
 contracts/eos/dappservices/*
+contracts/eos/*-prefix
 
 models/.placeholder
 
@@ -158,6 +159,10 @@ services/vcpu-dapp-service-node/state-init.js
 test/vcpuconsumer.spec.js
 
 # Custom
+contracts/eos/vcpuconsumer
 !contracts/eos/CMakeLists.txt
-!contracts/eos/cryptoconsumer/CMakeLists.txt
-!contracts/eos/dappservices/crypto
+!contracts/eos/crypconsumer/CMakeLists.txt
+!contracts/eos/dappservices/cryp
+nodeos.log
+logs/*
+*.sqlite
