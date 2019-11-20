@@ -17,6 +17,8 @@ var ctrt = artifacts.require(`./${contractCode}/`);
 const delay = ms => new Promise(res => setTimeout(res, ms));
 const util = require('util');
 
+
+const account = "crypconsumer";
 describe(`${contractCode} Contract`, () => {
     var testcontract;
 
@@ -33,16 +35,14 @@ describe(`${contractCode} Contract`, () => {
         console.log(s);
         return s;
     };
-    var account = "crypconsumer";
     before(done => {
         (async() => {
             try {
                 console.log(`TEST: running before`)
                 var deployedContract = await deployer.deploy(ctrt, account);
                 await genAllocateDAPPTokens(deployedContract, serviceName, "pprovider1", "default");
-                await genAllocateDAPPTokens(deployedContract, serviceName, "pprovider2", "foobar");
+                // await genAllocateDAPPTokens(deployedContract, serviceName, "pprovider2", "foobar");
                 testcontract = await getTestContract(account);
-
 
                 console.log(`TEST: before done`)
                 done();
@@ -56,43 +56,29 @@ describe(`${contractCode} Contract`, () => {
     it('Commom denom', done => {
         (async() => {
             try {
-
-                console.log(`Commom denom: 1`)
                 var owner = getTestAccountName(10);
                 var testAccountKeys = await getCreateAccount(owner);
-                console.log(`Commom denom: 2`)
                 await testcontract.testfn({
-                    a: 21,
-                    b: 1120000,
+                    user: owner,
                 }, {
                     authorization: `${owner}@active`,
                     broadcast: true,
                     sign: true,
                     keyProvider: [testAccountKeys.active.privateKey],
                 });
-                console.log(`Commom denom: 3`)
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        })();
-    });
 
-    it('Commom denom - long', done => {
-        (async() => {
-            try {
-                var owner = getTestAccountName(10);
-                var testAccountKeys = await getCreateAccount(owner);
-                await testcontract.testfn({
-                    a: 2120000001,
-                    b: 1120000000,
-                }, {
-                    authorization: `${owner}@active`,
-                    broadcast: true,
-                    sign: true,
-                    keyProvider: [testAccountKeys.active.privateKey],
-                });
+                const table = await testcontract.api.getTableRows({
+                    'json': true,
+                    'scope': account,
+                    'code': account,
+                    'table': 'eccbsign',
+                    'limit': 100
+                  });
+                  const entry = table.rows[0];
+                  console.log(entry)
+                  assert.ok(Boolean(entry), 'no entry');
+                  assert.equal(entry.R, `000102030405060708`, 'wrong entry');
+
                 done();
             }
             catch (e) {

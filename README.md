@@ -32,3 +32,25 @@ zeus unbox vcpu-dapp-service --no-create-dir
 zeus compile
 npm run test-crypto
 ```
+
+
+# vCPU Notes
+
+```
+ACTION vcpuconsumer/vcpuconsumer.cpp::testfn(input)
+  -> dappservices/vcpu/headers.hpp::call_vcpu_fn("gcd", input, combinator)
+    -> dappservices/vcpu/headers.hpp::_call_vcpu_fn(uri, input, combinator)
+      -> SEND_SVC_REQUEST(vrun, uri, input);
+
+/services/vcpu-dapp-service-node/chain/vrun.js
+  -> dappservices/vcpu/cmds/vrun.hpp::vrun
+    -> dappservices/vcpu/headers.hpp::updateVCPUResult
+      -> enters result into vcpuentries_t
+
+DSP retries initial action
+ACTION vcpuconsumer/vcpuconsumer.cpp::testfn(input)
+  -> dappservices/vcpu/headers.hpp::call_vcpu_fn("gcd", input, combinator)
+    -> dappservices/vcpu/headers.hpp::_call_vcpu_fn(uri, input, combinator)
+      -> dappservices/vcpu/headers.hpp::_vcpu_extractResults(vcpuentry, combinator)
+  -> can now work with result
+```
