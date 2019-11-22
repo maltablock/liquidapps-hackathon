@@ -75,6 +75,14 @@ TABLE poll {
 typedef eosio::multi_index<"polls"_n, poll> polls_t;
 
 // scope is poll_name
+TABLE has_voted_s {
+  name user;
+
+  uint64_t primary_key() const { return user.value; }
+};
+typedef eosio::multi_index<"hasvoted"_n, has_voted_s> has_voted_t;
+
+// scope is poll_name
 TABLE vote_s {
   uint64_t id;
   std::string description;
@@ -157,18 +165,29 @@ static bool bsign_verify_signature(const bsign_verify_signature_input &input) {
   return res.is_valid;
 };
 
-ACTION requestvote(name user, const std::vector<char> &blinded_message) {
+ACTION requestvote(name user, name for_poll_name, const std::vector<char> &blinded_message) {
   require_auth(user);
 
   rsa_params_t rsa_params(get_self(), get_self().value);
   auto itr = rsa_params.find(0);
   check(itr != rsa_params.end(), "need to call rsasetparams first");
 
+  // check if user already requested a vote before
+  // TODO: this contains a bug where users can vote for any poll instead of the one they claim
+  // because we cannot check if the unblinded message actually contains the poll they submit here
+  // FIX: each poll has its own different rsa params, or allow only one active poll at a time
+  has_voted_t has_voted(get_self(), for_poll_name.value);
+  check(has_voted.find(user.value) == has_voted.end(), "user already requested a signature for this vote");
+
   bsign_get_signature_input input;
   input.request_id = user;
   input.secret_key_encrypted = itr->secret_key_encrypted_to_dsp;
   input.blinded_message = blinded_message;
   bsign_get_signature(input);
+
+  has_voted.emplace(get_self(), [&](auto &p) {
+    p.user = user;
+  });
 }
 
 ACTION countvote(const std::string &vote_message,
@@ -201,7 +220,6 @@ ACTION countvote(const std::string &vote_message,
   votes.modify(vote_itr, eosio::same_payer, [&](auto &v) {
     v.num_votes += 1;
   });
-
 }
 
 CONTRACT_END((setrsaparams)(createpoll)(requestvote)(countvote))

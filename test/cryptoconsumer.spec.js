@@ -136,7 +136,7 @@ describe(`${contractCode} Contract`, () => {
         await testcontract.createpoll(
           {
             poll_name: `hackathon`,
-            options: [`LiquidCrypto by MaltaBlock`, `Monte Carlo by VigorDAC`],
+            options: [`LiquidCrypto by MaltaBlock`, `Monte Carlo by VigorDAC`, `Rekt Land by Gnoll`],
             eligible_voters: [voter1]
           },
           {
@@ -170,6 +170,7 @@ describe(`${contractCode} Contract`, () => {
         await testcontract.requestvote(
           {
             user: voter1,
+            for_poll_name: `hackathon`,
             blinded_message: blindedMessageHex
           },
           {

@@ -1,26 +1,78 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import Particles from "react-particles-js";
+import Form from './Form'
+import "./App.css";
 
+// https://rpj.bembi.org/#night-sky
+const particleJsParams = {
+  particles: {
+    number: {
+      value: 160,
+      density: {
+        enable: false
+      }
+    },
+    size: {
+      value: 5,
+      random: true,
+      anim: {
+        speed: 4,
+        size_min: 0.3
+      }
+    },
+    line_linked: {
+      enable: false
+    },
+    move: {
+      random: true,
+      speed: 1,
+      direction: "top",
+      out_mode: "out"
+    },
+    color: {
+      value: `#dedede`
+    }
+  },
+  interactivity: {
+    events: {
+      onhover: {
+        enable: true,
+        mode: "bubble"
+      },
+      onclick: {
+        enable: true,
+        mode: "repulse"
+      }
+    },
+    modes: {
+      bubble: {
+        distance: 250,
+        duration: 2,
+        size: 0,
+        opacity: 0
+      },
+      repulse: {
+        distance: 400,
+        duration: 4
+      }
+    }
+  }
+} as any;
 const App: React.FC = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app">
+      <div className="app__background">
+        <Particles params={particleJsParams} />
+      </div>
+      <div className="center">
+        <header className="header">
+          <h1>Team Malta Block - LiquidApps Hackathon</h1>
+          <h2>Liquid Crypto - Anonymous Voting Example</h2>
+        </header>
+        <Form />
+      </div>
     </div>
   );
-}
+};
 
 export default App;
