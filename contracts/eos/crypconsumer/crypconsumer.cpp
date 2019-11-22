@@ -8,21 +8,24 @@
 
 #define CONTRACT_NAME() crypconsumer
 
-struct input_t {
-  uint32_t a;
-  uint32_t b;
-};
-struct result_t {
-  input_t input;
-  uint32_t output;
-  uint32_t output_a_denom;
-  uint32_t output_b_denom;
-};
+
+inline std::vector<std::string> parse_vote_message(const std::string& memo) {
+  std::vector<std::string> results;
+  auto end = memo.cend();
+  auto start = memo.cbegin();
+
+  for (auto it = memo.cbegin(); it != end; ++it) {
+    if (*it == '-') {
+      results.emplace_back(start, it);
+      start = it + 1;
+    }
+  }
+  if (start != end) results.emplace_back(start, end);
+
+  return results;
+}
 
 CONTRACT_START()
-
-static void ecc_blind_verify(std::vector<char> uri){
-    SEND_SVC_REQUEST(vrunclean, uri)};
 
 TABLE bsign_entry {
   name request_id;
@@ -59,6 +62,45 @@ ACTION setrsaparams(const std::vector<char> &N, uint64_t e,
       params.N = N;
       params.e = e;
       params.secret_key_encrypted_to_dsp = secret_key_encrypted_to_dsp;
+    });
+  }
+}
+
+TABLE poll {
+  name poll_name;
+  std::vector<name> eligible_voters;
+
+  uint64_t primary_key() const { return poll_name.value; }
+};
+typedef eosio::multi_index<"polls"_n, poll> polls_t;
+
+// scope is poll_name
+TABLE vote_s {
+  uint64_t id;
+  std::string description;
+  uint64_t num_votes = 0;
+
+  uint64_t primary_key() const { return id; }
+};
+typedef eosio::multi_index<"votes"_n, vote_s> votes_t;
+ACTION createpoll(name poll_name, const std::vector<std::string> &options,
+                  const std::vector<name> &eligible_voters) {
+  require_auth(get_self());
+
+  polls_t polls(get_self(), get_self().value);
+  auto itr = polls.find(poll_name.value);
+  check(itr == polls.end(), "poll already exists");
+
+  polls.emplace(get_self(), [&](auto &p) {
+    p.poll_name = poll_name;
+    p.eligible_voters = eligible_voters;
+  });
+
+  votes_t votes(get_self(), poll_name.value);
+  for(auto& option : options) {
+    votes.emplace(get_self(), [&](auto &entry) {
+      entry.id = votes.available_primary_key();
+      entry.description = option;
     });
   }
 }
@@ -115,7 +157,7 @@ static bool bsign_verify_signature(const bsign_verify_signature_input &input) {
   return res.is_valid;
 };
 
-ACTION vote(name user, const std::vector<char> &blinded_message) {
+ACTION requestvote(name user, const std::vector<char> &blinded_message) {
   require_auth(user);
 
   rsa_params_t rsa_params(get_self(), get_self().value);
@@ -129,9 +171,10 @@ ACTION vote(name user, const std::vector<char> &blinded_message) {
   bsign_get_signature(input);
 }
 
-ACTION countvote(const std::string& vote_message, const std::vector<char> &signature) {
-  // no require_auth, anyone can submit a vote as long as it's a fresh valid signature
-  // important to hide initial user for anonymity
+ACTION countvote(const std::string &vote_message,
+                 const std::vector<char> &signature) {
+  // no require_auth, anyone can submit a vote as long as it's a fresh valid
+  // signature important to hide initial user for anonymity
   rsa_params_t rsa_params(get_self(), get_self().value);
   auto itr = rsa_params.find(0);
   check(itr != rsa_params.end(), "need to call rsasetparams first");
@@ -144,8 +187,21 @@ ACTION countvote(const std::string& vote_message, const std::vector<char> &signa
   auto is_valid = bsign_verify_signature(input);
   check(is_valid, "invalid signature provided");
 
-  uint64_t vote_id = stoull(vote_message);
-  eosio::print("voted for ", vote_id);
+  vector<string> parsed_vote = parse_vote_message(vote_message);
+  check(parsed_vote.size() >= 2, "invalid vote message structure");
+  name poll_name = name(parsed_vote[0]);
+  uint64_t vote_id = stoull(parsed_vote[1]);
+
+  eosio::print("voted for ", parsed_vote[0], parsed_vote[1]);
+
+  votes_t votes(get_self(), poll_name.value);
+  auto vote_itr = votes.find(vote_id);
+  check(vote_itr != votes.end(), "poll or vote option does not exist");
+
+  votes.modify(vote_itr, eosio::same_payer, [&](auto &v) {
+    v.num_votes += 1;
+  });
+
 }
 
-CONTRACT_END((setrsaparams)(vote)(countvote))
+CONTRACT_END((setrsaparams)(createpoll)(requestvote)(countvote))
