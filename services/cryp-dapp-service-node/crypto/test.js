@@ -9,7 +9,7 @@ const Bob = {
 };
 
 const key_encoded = Bob.key.exportKey(`pkcs1-private-der`)
-const initial = Bob.key.keyPair.e
+const initial = Bob.key.keyPair.n
 console.log(initial)
 // make it unsgined
 const byteArr = new Uint8Array(initial.toByteArray())
@@ -50,7 +50,7 @@ Alice.r = r;
 
 // Alice sends blinded to Bob
 Bob.blinded = blinded;
-
+console.log(`Blinded: `, Bob.blinded)
 const signed = BlindSignature.sign({
   blinded: Bob.blinded,
   key: Bob.key,

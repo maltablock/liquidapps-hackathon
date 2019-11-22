@@ -6,12 +6,13 @@ const loader = require("assemblyscript/lib/loader");
 const fs = require('fs');
 const path = require('path');
 const util = require('util')
-const { eccBlindSignatureSignRequest } = require(`../crypto/ecc-blind-signature`)
+const { blindSignatureGetSignature } = require(`../crypto/blind-signatures`)
 
 const executeMethod = async (method, payload) => {
     switch(method) {
-        case `eccbsignreq`: {
-            return eccBlindSignatureSignRequest(`hello`)
+        case `bsigngetsign`: {
+            logger.info(`bsigngetsign called with ${payload}`)
+            return blindSignatureGetSignature(payload)
         }
         default: {
             throw new Errorr(`executeMethod: Unsupported method ${method}`)
@@ -27,7 +28,7 @@ module.exports = async({ event, rollback }, { uri, payload }, state) => {
             uri
         };
     } else {
-        logger.info(`VRUN: in vrun ${JSON.stringify(payload)}`, payload)
+        logger.info(`VRUN: in vrun ${JSON.stringify(payload)}`, typeof payload)
     }
     const { payer, packageid, current_provider } = event;
     var contract_code = payer;

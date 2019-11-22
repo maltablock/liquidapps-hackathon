@@ -18,6 +18,7 @@ const {
   readVRAMData
 } = require("../extensions/tools/eos/dapp-services");
 const { getTestContract } = require("../extensions/tools/eos/utils");
+const { blindMessage, unblindSignature } = require("./utils");
 const BlindSignature = require('blind-signatures');
 const BigInteger = require('jsbn').BigInteger;
 
@@ -57,7 +58,7 @@ describe(`${contractCode} Contract`, () => {
         // await genAllocateDAPPTokens(deployedContract, serviceName, "pprovider2", "foobar");
         testcontract = await getTestContract(account);
 
-        console.log(`TEST: before done`);
+        console.log(`TEST: before finished`);
         done();
       } catch (e) {
         done(e);
@@ -69,8 +70,12 @@ describe(`${contractCode} Contract`, () => {
     (async () => {
       try {
         var owner = getTestAccountName(10);
-        var testAccountKeys = await getCreateAccount(owner);
+        var ownerAccountKeys = await getCreateAccount(owner);
 
+        /**
+         *  STEP 1: Create RSA keys and set them on contract and distribute secret key to DSP
+         */
+        
         // contract creator creates keys and sets RSA params
         // encrypts secret key to DSP's public key
         const key = BlindSignature.keyGeneration({ b: 1024 })
@@ -91,10 +96,9 @@ describe(`${contractCode} Contract`, () => {
             secret_key_encrypted_to_dsp: keyEncryptedToDspHex,
           },
           {
-            authorization: `${owner}@active`,
+            authorization: `${account}@active`,
             broadcast: true,
             sign: true,
-            keyProvider: [testAccountKeys.active.privateKey]
           }
         );
 
@@ -106,32 +110,51 @@ describe(`${contractCode} Contract`, () => {
             limit: 1,
           });
 
-        let entry = table.rows[0];
-        console.log(entry);
-        assert.ok(Boolean(entry), "no RSA params entry");
+        const rsaEntry = table.rows[0];
+        console.log(rsaEntry);
+        assert.ok(Boolean(rsaEntry), "no RSA params rsaEntry");
         assert.equal(
           N.toString(),
-          new BigInteger(Buffer.from(entry.N, `hex`)).toString(),
+          new BigInteger(Buffer.from(rsaEntry.N, `hex`)).toString(),
           "wrong N"
         );
         assert.equal(
           e,
-          entry.e,
+          rsaEntry.e,
           "wrong e"
         );
 
+        /**
+         *  STEP 1: user blinds his message and gets blinded signature
+         */
+        const message = `1`
+        const { blindedMessage, blindFactor } = blindMessage(message, rsaEntry.N, rsaEntry.e);
+        const blindedMessageHex = Buffer.from(new Uint8Array(blindedMessage.toByteArray())).toString(`hex`)
+        await testcontract.blindsignreq(
+          {
+            user: owner,
+            blinded_message: blindedMessageHex,
+          },
+          {
+            authorization: `${owner}@active`,
+            broadcast: true,
+            sign: true,
+            keyProvider: [ownerAccountKeys.active.privateKey]
+          }
+        );
 
-        // await testcontract.testfn(
-        //   {
-        //     user: owner
-        //   },
-        //   {
-        //     authorization: `${owner}@active`,
-        //     broadcast: true,
-        //     sign: true,
-        //     keyProvider: [testAccountKeys.active.privateKey]
-        //   }
-        // );
+        table = await testcontract.api.getTableRows({
+            json: true,
+            scope: account,
+            code: account,
+            table: "bsign",
+            limit: 100,
+          });
+        console.log(`table`, table.rows);
+        let bSignEntry = table.rows.find(row => row.request_id === owner)
+        console.log(bSignEntry);
+        assert.ok(Boolean(bSignEntry), "no bSignEntry found");
+
 
         // let table = await testcontract.api.getTableRows({
         //   json: true,
