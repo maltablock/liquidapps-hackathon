@@ -94,7 +94,28 @@ static void bsign_get_signature(const bsign_get_signature_input &input) {
   // eosio::print("\nafter emplace call_cryp_fn\n");
 };
 
-ACTION blindsignreq(name user, const std::vector<char> &blinded_message) {
+struct bsign_verify_signature_input {
+  std::vector<char> N;
+  uint64_t e;
+  std::string message;
+  std::vector<char> signature;
+};
+struct bsign_verify_signature_result {
+  uint64_t is_valid;
+};
+static bool bsign_verify_signature(const bsign_verify_signature_input &input) {
+  // eosio::print("\nbefore call_cryp_fn\n");
+  auto res = call_cryp_fn<bsign_verify_signature_result>(
+      name("bsignverify"), pack(input), [&](auto &results) {
+        eosio::check(results.size() > 0, "not enough results");
+        eosio::check(results[0].result.size() > 0, "not enough results1");
+        return results[0].result;
+      });
+
+  return res.is_valid;
+};
+
+ACTION vote(name user, const std::vector<char> &blinded_message) {
   require_auth(user);
 
   rsa_params_t rsa_params(get_self(), get_self().value);
@@ -108,4 +129,23 @@ ACTION blindsignreq(name user, const std::vector<char> &blinded_message) {
   bsign_get_signature(input);
 }
 
-CONTRACT_END((setrsaparams)(blindsignreq))
+ACTION countvote(const std::string& vote_message, const std::vector<char> &signature) {
+  // no require_auth, anyone can submit a vote as long as it's a fresh valid signature
+  // important to hide initial user for anonymity
+  rsa_params_t rsa_params(get_self(), get_self().value);
+  auto itr = rsa_params.find(0);
+  check(itr != rsa_params.end(), "need to call rsasetparams first");
+
+  bsign_verify_signature_input input;
+  input.N = itr->N;
+  input.e = itr->e;
+  input.message = vote_message;
+  input.signature = signature;
+  auto is_valid = bsign_verify_signature(input);
+  check(is_valid, "invalid signature provided");
+
+  uint64_t vote_id = stoull(vote_message);
+  eosio::print("voted for ", vote_id);
+}
+
+CONTRACT_END((setrsaparams)(vote)(countvote))

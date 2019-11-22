@@ -31,7 +31,22 @@ const unblindSignature = (blindSignatureHex, N_hex, blindFactor) => {
   return signature
 };
 
+
+const blindSignatureVerify = (N_hex, e, message, signature) => {
+  const N = new BigInteger(Buffer.from(N_hex, `hex`))
+
+  const isValid = BlindSignature.verify({
+    unblinded: signature,
+    N: N,
+    E: e,
+    message: message,
+  });
+
+  return isValid;
+};
+
 module.exports = {
   blindMessage,
   unblindSignature,
+  blindSignatureVerify,
 };

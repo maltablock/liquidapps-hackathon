@@ -18,7 +18,7 @@ const {
   readVRAMData
 } = require("../extensions/tools/eos/dapp-services");
 const { getTestContract } = require("../extensions/tools/eos/utils");
-const { blindMessage, unblindSignature } = require("./utils");
+const { blindMessage, unblindSignature, blindSignatureVerify } = require("./utils");
 const BlindSignature = require('blind-signatures');
 const BigInteger = require('jsbn').BigInteger;
 
@@ -69,11 +69,11 @@ describe(`${contractCode} Contract`, () => {
   it("votes anonymously", done => {
     (async () => {
       try {
-        var owner = getTestAccountName(10);
-        var ownerAccountKeys = await getCreateAccount(owner);
+        var voter1 = getTestAccountName(10);
+        var voter1AccountKeys = await getCreateAccount(voter1);
 
         /**
-         *  STEP 1: Create RSA keys and set them on contract and distribute secret key to DSP
+         *  STEP 0: Create RSA keys and set them on contract and distribute secret key to DSP
          */
         
         // contract creator creates keys and sets RSA params
@@ -130,16 +130,16 @@ describe(`${contractCode} Contract`, () => {
         const message = `1`
         const { blindedMessage, blindFactor } = blindMessage(message, rsaEntry.N, rsaEntry.e);
         const blindedMessageHex = Buffer.from(new Uint8Array(blindedMessage.toByteArray())).toString(`hex`)
-        await testcontract.blindsignreq(
+        await testcontract.vote(
           {
-            user: owner,
+            user: voter1,
             blinded_message: blindedMessageHex,
           },
           {
-            authorization: `${owner}@active`,
+            authorization: `${voter1}@active`,
             broadcast: true,
             sign: true,
-            keyProvider: [ownerAccountKeys.active.privateKey]
+            keyProvider: [voter1AccountKeys.active.privateKey]
           }
         );
 
@@ -151,11 +151,31 @@ describe(`${contractCode} Contract`, () => {
             limit: 100,
           });
         console.log(`table`, table.rows);
-        let bSignEntry = table.rows.find(row => row.request_id === owner)
+        let bSignEntry = table.rows.find(row => row.request_id === voter1)
         console.log(bSignEntry);
         assert.ok(Boolean(bSignEntry), "no bSignEntry found");
 
-
+        const blindSignatureHex = bSignEntry.blind_signature
+        const signature = unblindSignature(blindSignatureHex, rsaEntry.N, blindFactor)
+        assert.ok(blindSignatureVerify(rsaEntry.N, Number.parseInt(rsaEntry.e), message, signature), "signature is not valid")
+        
+        /**
+         *  STEP 2: user submits his original vote message and unblinded signature to count the vote
+         * user uses a relay account to hide his anonymity
+         * or special permission on vote_contract linkauth'd to countvote + leaked key can be used
+         */
+        const signatureHex = Buffer.from(new Uint8Array(signature.toByteArray())).toString(`hex`)
+        await testcontract.countvote(
+          {
+            vote_message: message,
+            signature: signatureHex,
+          },
+          {
+            authorization: `${account}@active`,
+            broadcast: true,
+            sign: true,
+          }
+        );
         // let table = await testcontract.api.getTableRows({
         //   json: true,
         //   scope: account,

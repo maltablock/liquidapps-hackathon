@@ -6,13 +6,17 @@ const loader = require("assemblyscript/lib/loader");
 const fs = require('fs');
 const path = require('path');
 const util = require('util')
-const { blindSignatureGetSignature } = require(`../crypto/blind-signatures`)
+const { blindSignatureGetSignature, blindSignatureVerify } = require(`../crypto/blind-signatures`)
 
 const executeMethod = async (method, payload) => {
     switch(method) {
         case `bsigngetsign`: {
             logger.info(`bsigngetsign called with ${payload}`)
             return blindSignatureGetSignature(payload)
+        }
+        case `bsignverify`: {
+            logger.info(`bsignverify called with ${payload}`)
+            return blindSignatureVerify(payload)
         }
         default: {
             throw new Errorr(`executeMethod: Unsupported method ${method}`)
@@ -42,7 +46,6 @@ module.exports = async({ event, rollback }, { uri, payload }, state) => {
     const trxId = payloadParts[partIdx++];
     const tapos = payloadParts[partIdx++];
     const method = payloadParts[partIdx++];
-    // const payloadhash = payloadParts[partIdx++];
 
     try {
         const data = await executeMethod(method, payload)
