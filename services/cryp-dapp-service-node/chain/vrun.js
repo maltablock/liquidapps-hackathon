@@ -8,15 +8,26 @@ const path = require('path');
 const util = require('util')
 const { eccBlindSignatureSignRequest } = require(`../crypto/ecc-blind-signature`)
 
+const executeMethod = async (method, payload) => {
+    switch(method) {
+        case `eccbsignreq`: {
+            return eccBlindSignatureSignRequest(`hello`)
+        }
+        default: {
+            throw new Errorr(`executeMethod: Unsupported method ${method}`)
+        }
+    }
+}
 module.exports = async({ event, rollback }, { uri, payload }, state) => {
-    logger.info(`VRUN: in vrun ${JSON.stringify(payload)}`, payload)
     if (rollback) {
+        logger.info(`VRUN: rollback`)
         event.action = 'vrunclean';
-        console.log('cryp after failed transaction', uri);
         return {
             size: 0,
             uri
         };
+    } else {
+        logger.info(`VRUN: in vrun ${JSON.stringify(payload)}`, payload)
     }
     const { payer, packageid, current_provider } = event;
     var contract_code = payer;
@@ -33,9 +44,8 @@ module.exports = async({ event, rollback }, { uri, payload }, state) => {
     // const payloadhash = payloadParts[partIdx++];
 
     try {
-        const data = eccBlindSignatureSignRequest()
-        // const data = `ffffffffffffffff`
-
+        const data = await executeMethod(method, payload)
+        logger.info(`Executed ${method}: `, data)
         return {
             uri,
             data,

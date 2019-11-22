@@ -2,13 +2,11 @@ var crypto = require("crypto");
 var BigInteger = require("bigi");
 var ecurve = require("ecurve");
 var createKeccakHash = require("keccak");
-const { createSerialBuffer, arrayToHex } = require(`./helpers`);
 
 const privateKey = Buffer.from(
   "1184cd2cdd640ca42cfc3a091c51d549b2f016d454b2774019c2b2d2e08529fd",
   "hex"
 );
-const m = "1";
 const ecparams = ecurve.getCurveByName("secp256k1");
 const curvePt = ecparams.G.multiply(BigInteger.fromBuffer(privateKey));
 const x = curvePt.affineX.toBuffer(32);
@@ -24,13 +22,9 @@ function random(bytes) {
   return k;
 }
 
-function randomDeterministic(numBytes, nonce, secret = ``) {
+function randomDeterministic(numBytes, nonce, secret = `SECRET_FOR_USER`) {
   // usually we would hash process.env.DSP_PRIVATE_KEY or something
   // to make this key different for all DSPs
-  secret =
-    secret ||
-    process.env.DSP_CRYPTO_SECRET ||
-    `MALTABLOCK_JKAWDHUIWAHDAWHJ_SECRET`;
 
   // implement a full domain hash
   let IV = 0;
@@ -103,62 +97,62 @@ function keccak256(inp) {
     .digest("hex");
 }
 
-const eccBlindSignatureSignRequest = requestId => {
-  /* STEP 1
-  The signer randomly selects an integer k ∈ Zn
-  , calculates R = kG, and then transmits R to the
-  requester
-  */
-  const k = BigInteger.fromBuffer(randomDeterministic(32, `${requestId}`));
-  const R = multiply(G, k);
-  console.log(`R = `, R);
-  const buf = createSerialBuffer();
-  buf.pushBytes(R.getEncoded());
+const computeC = (requestId, encodedR, message) => {
+  const R = ecurve.Point.decodeFrom(ecparams, Buffer.from(encodedR, `hex`));
+  const γ = BigInteger.fromBuffer(randomDeterministic(32, `${requestId}-gamma`));
+  const δ = BigInteger.fromBuffer(randomDeterministic(32, `${requestId}-rho`));
 
-  return arrayToHex(buf.asUint8Array());
+  const A = add(add(R, multiply(G, γ)), multiply(curvePt, δ));
+
+  const t = A.x.mod(n).toString();
+
+  const c = BigInteger.fromHex(keccak256(message + t.toString()));
+  return c;
 };
 
-const eccBlindSignatureCreateSignature = (requestId, blindedMessage) => {
-  /* STEP 3
-  The signer calculates the blind signature s’ = k − c’d, and then sends it to the requester.
+const eccBlindSignatureCreateBlindedMessage = (
+  requestId,
+  encodedR,
+  message
+) => {
+  /* STEP 2
+  The requester randomly selects two integers γ and δ ∈ Zn, blinds the message, and then
+  calculates point A = R + γG + δP = (x, y), t = x (mod n). If t equals zero, then γ and δ should
+  be reselected. The requester calculates c = SHA256 (m || t), c’ = c − δ, where SHA256 is a
+  novel hash function computed with 32-bit words and c’ is the blinded message, and then sends
+  c’ to the signer.
   */
-  blindedMessage = BigInteger.fromHex(blindedMessage)
-  const k = BigInteger.fromBuffer(randomDeterministic(32, `${requestId}`));
-  const blindSignature = k.subtract(
-    blindedMessage.multiply(BigInteger.fromBuffer(privateKey))
-  );
+  const c = computeC(requestId, encodedR, message);
 
-  return blindSignature.toHex();
+  const δ = BigInteger.fromBuffer(randomDeterministic(32, `${requestId}-rho`));
+  const cBlinded = c.subtract(δ);
+
+  return cBlinded.toHex();
 };
 
-const eccBlindSignatureVerify = (requestId, message, signature) => {
-/* STEP 5
-Both the requester and signer can verify the signature (c, s) through the formation
-c = SHA256(m || (cP + sG)|x mod n)
+const eccBlindSignatureUnblind = (
+  requestId,
+  encodedR,
+  message,
+  blindSignature
+) => {
+  /* STEP 4
+The requester calculates s = s’ + γ, and (c, s) is the signature on m.
 */
-const c = BigInteger.fromHex(signature.c)
-const s = BigInteger.fromHex(signature.s)
-var toHash = add(
-    multiply(curvePt,c.mod(n)),
-    multiply(ecparams.G,s.mod(n))
-  ).x.mod(n)
-console.log("c: ")
-console.log(BigInteger.fromHex(keccak256(m+toHash)).toString());
+  blindSignature = BigInteger.fromHex(blindSignature);
+  var γ = BigInteger.fromBuffer(randomDeterministic(32, `${requestId}-gamma`));
+  var s = blindSignature.add(γ);
 
-console.log("s: ")
-console.log(s.mod(n).toString())
+  const c = computeC(requestId, encodedR, message);
+  const signature = {
+    c: c.toHex(),
+    s: s.toHex()
+  };
 
-console.log("hashvote: ")
-console.log(BigInteger.fromHex(keccak256(m)).toString())
-  return true
+  return signature
 };
-
-eccBlindSignatureSignRequest();
 
 module.exports = {
-  eccBlindSignatureSignRequest,
-  eccBlindSignatureCreateSignature,
-  eccBlindSignatureVerify,
+  eccBlindSignatureCreateBlindedMessage,
+  eccBlindSignatureUnblind,
 };
-
-// use https://github.com/kevinejohn/blind-signatures instead

@@ -32,6 +32,35 @@ TABLE ecc_blind_sign_entries {
 typedef eosio::multi_index<"eccbsign"_n, ecc_blind_sign_entries>
     eccbsign_entries_t;
 
+TABLE rsa_params {
+  uint64_t id;
+  std::vector<char> N;
+  uint64_t e;
+  std::vector<char> secret_key_encrypted_to_dsp;
+  uint64_t primary_key() const { return id; }
+};
+typedef eosio::multi_index<"rsaparams"_n, rsa_params>
+    rsa_params_t;
+
+ACTION setrsaparams(std::vector<char> N, uint64_t e, std::vector<char> secret_key_encrypted_to_dsp) {
+  rsa_params_t rsa_params(get_self(), get_self().value);
+  auto itr = rsa_params.find(0);
+  if(itr == rsa_params.end()) {
+    rsa_params.emplace(get_self(), [&](auto &params) {
+      params.id = 0;
+      params.N = N;
+      params.e = e;
+      params.secret_key_encrypted_to_dsp = secret_key_encrypted_to_dsp;
+    });
+  } else {
+     rsa_params.modify(itr, get_self(), [&](auto &params) {
+      params.N = N;
+      params.e = e;
+      params.secret_key_encrypted_to_dsp = secret_key_encrypted_to_dsp;
+    });
+  }
+}
+
 struct ecc_blind_sign_request_input {
   uint64_t request_id;
 };
@@ -70,53 +99,4 @@ static void ecc_blind_sign_request(uint64_t request_id) {
   require_auth(user);
   ecc_blind_sign_request(user.value);
 }
-CONTRACT_END((testfn))
-
-std::vector<char> vvcomdenom(std::vector<char> payload) {
-  input_t input = unpack<input_t>(payload);
-  result_t result;
-  result.input = input;
-  uint32_t x = input.a;
-  uint32_t y = input.b;
-  bool swap = false;
-  if (x < y) {
-    swap = true;
-    x = input.b;
-    y = input.a;
-  }
-  result.output = 0;
-  for (int i = x; i > 1; i--) {
-    if (x % i == 0 && y % i == 0) {
-      result.output = i;
-      result.output_b_denom = input.b / i;
-      result.output_a_denom = input.a / i;
-      break;
-    }
-  }
-  auto packed = pack(result);
-  return packed;
-}
-
-char *the_buffer;
-uint32_t the_buffer_size;
-char *the_result;
-bool inited = false;
-extern "C" {
-char *initialize(uint32_t sze) {
-  if (!inited) {
-    inited = true;
-    the_buffer = (char *)malloc(sze);
-    the_buffer_size = sze;
-    return the_buffer;
-  } else {
-    return the_result;
-  }
-}
-uint32_t run_query() {
-  std::vector<char> payload(the_buffer, the_buffer + the_buffer_size);
-  auto res = vvcomdenom(payload);
-  the_result = res.data();
-  return res.size();
-  // vvcomdenom(std::vector<char>(str.data(),str.data()+str.size()));
-}
-}
+CONTRACT_END((testfn)(setrsaparams))
