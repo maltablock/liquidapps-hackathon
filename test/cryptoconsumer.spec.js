@@ -32,26 +32,25 @@ var ctrt = artifacts.require(`./${contractCode}/`);
 const delay = ms => new Promise(res => setTimeout(res, ms));
 const util = require("util");
 
-const account = "crypconsumer";
+const account = "anonvoting";
 describe(`${contractCode} Contract`, () => {
   var testcontract;
 
-  const getTestAccountName = num => {
-    var fivenum = num.toString(5).split("");
-    for (var i = 0; i < fivenum.length; i++) {
-      fivenum[i] = String.fromCharCode(fivenum[i].charCodeAt(0) + 1);
-    }
-    fivenum = fivenum.join("");
-    var s = "111111111111" + fivenum;
-    var prefix = "test";
-    s = prefix + s.substr(s.length - (12 - prefix.length));
-    console.log(s);
-    return s;
-  };
+  // const getTestAccountName = num => {
+  //   var fivenum = num.toString(5).split("");
+  //   for (var i = 0; i < fivenum.length; i++) {
+  //     fivenum[i] = String.fromCharCode(fivenum[i].charCodeAt(0) + 1);
+  //   }
+  //   fivenum = fivenum.join("");
+  //   var s = "111111111111" + fivenum;
+  //   var prefix = "test";
+  //   s = prefix + s.substr(s.length - (12 - prefix.length));
+  //   return s;
+  // };
+
   before(done => {
     (async () => {
       try {
-        console.log(`TEST: running before`);
         var deployedContract = await deployer.deploy(ctrt, account);
         await genAllocateDAPPTokens(
           deployedContract,
@@ -62,7 +61,6 @@ describe(`${contractCode} Contract`, () => {
         // await genAllocateDAPPTokens(deployedContract, serviceName, "pprovider2", "foobar");
         testcontract = await getTestContract(account);
 
-        console.log(`TEST: before finished`);
         done();
       } catch (e) {
         done(e);
@@ -73,8 +71,12 @@ describe(`${contractCode} Contract`, () => {
   it("votes anonymously", done => {
     (async () => {
       try {
-        var voter1 = getTestAccountName(10);
-        var voter1AccountKeys = await getCreateAccount(voter1);
+        const voter1 = `voter1`
+        const voter2 = `voter2`
+        console.log(`voter1 name :${voter1}`)
+        console.log(`voter2 name :${voter2}`)
+        const voter1AccountKeys = await getCreateAccount(voter1);
+        const voter2AccountKeys = await getCreateAccount(voter2);
 
         /**
          *  STEP 0: Create RSA keys and set them on contract and distribute secret key to DSP
@@ -119,7 +121,6 @@ describe(`${contractCode} Contract`, () => {
         });
 
         const rsaEntry = table.rows[0];
-        console.log(rsaEntry);
         assert.ok(Boolean(rsaEntry), "no RSA params rsaEntry");
         assert.equal(
           N.toString(),

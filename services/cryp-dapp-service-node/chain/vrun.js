@@ -24,28 +24,28 @@ const executeMethod = async (method, payload) => {
     }
 }
 module.exports = async({ event, rollback }, { uri, payload }, state) => {
-    if (rollback) {
-        logger.info(`VRUN: rollback`)
-        event.action = 'vrunclean';
-        return {
-            size: 0,
-            uri
-        };
-    } else {
-        logger.info(`VRUN: in vrun ${JSON.stringify(payload)}`, typeof payload)
-    }
-    const { payer, packageid, current_provider } = event;
-    var contract_code = payer;
-    var loadedExtensions = await loadModels("dapp-services");
-    var service = loadedExtensions.find(a => a.name == "cryp").contract;
     const uriStr = Buffer.from(uri, 'hex').toString('utf8');
-
-    var resolvedPackages = await resolveProviderPackage(contract_code, service, paccount);
     const payloadParts = uriStr.split('://', 4);
     let partIdx = 0;
     const trxId = payloadParts[partIdx++];
     const tapos = payloadParts[partIdx++];
     const method = payloadParts[partIdx++];
+
+    if (rollback) {
+        logger.info(`rollback for ${method}`)
+        event.action = 'vrunclean';
+        return {
+            size: 0,
+            uri
+        };
+    }
+
+    const { payer, packageid, current_provider } = event;
+    var contract_code = payer;
+    var loadedExtensions = await loadModels("dapp-services");
+    var service = loadedExtensions.find(a => a.name == "cryp").contract;
+
+    var resolvedPackages = await resolveProviderPackage(contract_code, service, paccount);
 
     try {
         const data = await executeMethod(method, payload)
@@ -57,7 +57,7 @@ module.exports = async({ event, rollback }, { uri, payload }, state) => {
         };
     }
     catch (e) {
-        logger.error(`error running cryp fn: ${e}`);
+        logger.error(`error while executing crypto function: ${e}`);
         return {
             uri,
             data: '',
