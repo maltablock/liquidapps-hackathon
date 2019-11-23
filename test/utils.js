@@ -1,19 +1,9 @@
-import { TextDecoder, TextEncoder } from "text-encoding";
-const { BigNumber } = require("bignumber.js");
-const getDefaultArgs = require("../extensions/helpers/getDefaultArgs");
-const fetch = require("node-fetch");
-const ecc = require("eosjs-ecc");
-let { PrivateKey, PublicKey } = require("eosjs-ecc");
-const eosjs2 = require("eosjs");
-const { JsonRpc, Api, Serialize } = eosjs2;
-const { JsSignatureProvider } = require("eosjs/dist/eosjs-jssig");
+let { PrivateKey } = require("eosjs-ecc");
 const {
-  getUrl,
   getLocalDSPEos,
   getCreateKeys,
   getCreateAccount,
 } = require("../extensions/tools/eos/utils");
-const { encodeName } = require("../services/dapp-services-node/common");
 
 async function createDeterministicKey(seed) {
   var key = await PrivateKey.fromSeed(seed);

@@ -2,20 +2,10 @@ import "mocha";
 require("babel-core/register");
 require("babel-polyfill");
 const { assert } = require("chai"); // Using Assert style
-const {
-  getNetwork,
-  getCreateKeys,
-  getCreateAccount,
-  getEos
-} = require("../extensions/tools/eos/utils");
-var Eos = require("eosjs");
-const getDefaultArgs = require("../extensions/helpers/getDefaultArgs");
-
 const artifacts = require("../extensions/tools/eos/artifacts");
 const deployer = require("../extensions/tools/eos/deployer");
 const {
   genAllocateDAPPTokens,
-  readVRAMData
 } = require("../extensions/tools/eos/dapp-services");
 const { getTestContract } = require("../extensions/tools/eos/utils");
 const {
@@ -33,24 +23,10 @@ const BigInteger = require("jsbn").BigInteger;
 var contractCode = "crypconsumer";
 var serviceName = "cryp";
 var ctrt = artifacts.require(`./${contractCode}/`);
-const delay = ms => new Promise(res => setTimeout(res, ms));
-const util = require("util");
 
 const account = "anonvoting";
 describe(`${contractCode} Contract`, () => {
   var testcontract;
-
-  // const getTestAccountName = num => {
-  //   var fivenum = num.toString(5).split("");
-  //   for (var i = 0; i < fivenum.length; i++) {
-  //     fivenum[i] = String.fromCharCode(fivenum[i].charCodeAt(0) + 1);
-  //   }
-  //   fivenum = fivenum.join("");
-  //   var s = "111111111111" + fivenum;
-  //   var prefix = "test";
-  //   s = prefix + s.substr(s.length - (12 - prefix.length));
-  //   return s;
-  // };
 
   before(done => {
     (async () => {

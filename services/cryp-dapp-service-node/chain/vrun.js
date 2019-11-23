@@ -1,11 +1,6 @@
-const { getCreateKeys } = require('../../../extensions/helpers/key-utils');
 const { loadModels } = require('../../../extensions/tools/models');
-const { deserialize, eosDSPGateway, generateABI, genNode, eosPrivate, paccount, forwardEvent, resolveProviderData, resolveProvider, getProviders, resolveProviderPackage, paccountPermission } = require('../../dapp-services-node/common');
+const { paccount, resolveProviderPackage } = require('../../dapp-services-node/common');
 const logger = require('../../../extensions/helpers/logger');
-const loader = require("assemblyscript/lib/loader");
-const fs = require('fs');
-const path = require('path');
-const util = require('util')
 const { blindSignatureGetSignature, blindSignatureVerify } = require(`../crypto/blind-signatures`)
 
 const executeMethod = async (method, payload) => {
@@ -23,6 +18,7 @@ const executeMethod = async (method, payload) => {
         }
     }
 }
+
 module.exports = async({ event, rollback }, { uri, payload }, state) => {
     const uriStr = Buffer.from(uri, 'hex').toString('utf8');
     const payloadParts = uriStr.split('://', 4);
