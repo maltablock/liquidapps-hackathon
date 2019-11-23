@@ -66,24 +66,3 @@ export async function fetchAllRows<T>(
 
     return rows;
 }
-
-type ScopeResult = {
-    code: string;
-    count: number;
-    payer: string;
-    scope: string;
-    table: string;
-};
-
-export async function fetchAllScopes(contract: string, table: string): Promise<string[]> {
-    const mergedOptions = {
-        json: true,
-        lower_bound: 0,
-        upper_bound: -1,
-        limit: 9999,
-        code: contract,
-        table,
-    };
-    const rows = (await rpc.get_table_by_scope(mergedOptions)).rows as ScopeResult[];
-    return rows.map(row => row.scope);
-}

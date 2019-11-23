@@ -1,7 +1,6 @@
 import React, { Fragment } from "react";
 import styled from "styled-components";
 import { observer } from 'mobx-react';
-import formReducer, { initialFormState } from "./formReducer";
 import Select from "react-select";
 import Button from "./Button";
 import { useStore } from "./store/useStore";

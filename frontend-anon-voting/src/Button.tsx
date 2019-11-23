@@ -8,7 +8,7 @@ type Props = {
 };
 
 const getColor = (props: Props) => {
-  return props.color || `rebeccapurple`;
+  return props.color || `#7F39D3`;
 };
 
 const Button = styled.button<Props>`

@@ -1,8 +1,8 @@
 import React from "react";
 import Particles from "react-particles-js";
 import Form from './Form'
-import "./App.css";
 import { storeContext, rootStore } from "./store";
+import "./App.css";
 
 // https://rpj.bembi.org/#night-sky
 const particleJsParams = {
@@ -78,8 +78,8 @@ const App: React.FC = () => {
       </div>
       <div className="center">
         <header className="header">
-          <h1>Team Malta Block - LiquidApps Hackathon</h1>
-          <h2>Liquid Crypto - Anonymous Voting Example</h2>
+          <h1>Team Malta Block - DAPP Hackathon</h1>
+          <h2>Liquid Crypto Service - Anonymous Voting Example</h2>
         </header>
         <Form />
       </div>

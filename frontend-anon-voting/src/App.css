@@ -41,10 +41,19 @@ body {
 }
 
 .header {
-  color: rebeccapurple;
+  color: #7F39D3;
   position: absolute;
   top: 0;
   pointer-events: none;
+}
+
+h1 {
+  font-size: 2.5em;
+  margin: 26px 0 6px 0;
+}
+h2 {
+  font-size: 2em;
+  margin: 0 0 12px 0;
 }
 
 * {

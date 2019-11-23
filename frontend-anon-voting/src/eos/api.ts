@@ -10,9 +10,7 @@ const RELAY_KEY = `5JcAtFTBhdWPu5Ejtz5NyTxQVyNRXZUjATQCiStrKTrtMKeaXvB`
 const VOTER_1_KEY = `5JvwL42tBumC6S73hUdCcgo6mKL9TR9iFoPHodYMw5AykNMumoF`
 const VOTER_2_KEY = `5JNs2NymBcn2bjU7biJC9NVsHiVdHB5o6wD51SaxhxGSBBUZZfn`
 let keys = [RELAY_KEY, VOTER_1_KEY, VOTER_2_KEY]
-if(keys.length === 0) {
-    console.error(`No private keys passed. You'll be unable to sign`)
-}
+
 const signatureProvider = new JsSignatureProvider(keys)
 
 const api = new Api({
