@@ -81,6 +81,13 @@ TABLE has_voted_s {
   uint64_t primary_key() const { return user.value; }
 };
 typedef eosio::multi_index<"hasvoted"_n, has_voted_s> has_voted_t;
+// scope is poll_name
+TABLE has_seen_s {
+  uint64_t signature_first_64_bits;
+
+  uint64_t primary_key() const { return signature_first_64_bits; }
+};
+typedef eosio::multi_index<"hasseen"_n, has_seen_s> has_seen_t;
 
 // scope is poll_name
 TABLE vote_s {
@@ -217,8 +224,19 @@ ACTION countvote(const std::string &vote_message,
   auto vote_itr = votes.find(vote_id);
   check(vote_itr != votes.end(), "poll or vote option does not exist");
 
+  // check if signature was already submitted
+  std::vector<char> signature_first_64_bits(signature.begin(), signature.begin() + 64);
+  // interpret as uint64_t
+  uint64_t signature_first_64_bits_number = *reinterpret_cast<const uint64_t*>(&signature_first_64_bits[0]);
+  has_seen_t has_seen(get_self(), poll_name.value);
+  check(has_seen.find(signature_first_64_bits_number) == has_seen.end(), "the same vote signature pair has already been counted");
+
   votes.modify(vote_itr, eosio::same_payer, [&](auto &v) {
     v.num_votes += 1;
+  });
+
+  has_seen.emplace(get_self(), [&](auto &x) {
+    x.signature_first_64_bits = signature_first_64_bits_number;
   });
 }
 

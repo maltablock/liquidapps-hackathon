@@ -2,6 +2,7 @@ import React from "react";
 import Particles from "react-particles-js";
 import Form from './Form'
 import "./App.css";
+import { storeContext, rootStore } from "./store";
 
 // https://rpj.bembi.org/#night-sky
 const particleJsParams = {
@@ -58,8 +59,19 @@ const particleJsParams = {
     }
   }
 } as any;
+
+
+export const StoreProvider = ({ children }: any) => {
+  return <storeContext.Provider value={rootStore}>{children}</storeContext.Provider>;
+};
+
 const App: React.FC = () => {
+  React.useEffect(() => {
+    rootStore.init();
+  }, [])
+
   return (
+    <StoreProvider>
     <div className="app">
       <div className="app__background">
         <Particles params={particleJsParams} />
@@ -72,6 +84,7 @@ const App: React.FC = () => {
         <Form />
       </div>
     </div>
+    </StoreProvider>
   );
 };
 

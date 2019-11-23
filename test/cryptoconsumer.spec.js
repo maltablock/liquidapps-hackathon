@@ -22,6 +22,10 @@ const {
   blindMessage,
   unblindSignature,
   blindSignatureVerify
+} = require("./utils-crypto");
+const {
+  addRelayPermission,
+  createDeterministicAccount,
 } = require("./utils");
 const BlindSignature = require("blind-signatures");
 const BigInteger = require("jsbn").BigInteger;
@@ -60,6 +64,7 @@ describe(`${contractCode} Contract`, () => {
         );
         // await genAllocateDAPPTokens(deployedContract, serviceName, "pprovider2", "foobar");
         testcontract = await getTestContract(account);
+        await addRelayPermission(account, `relay`, `countvote`)
 
         done();
       } catch (e) {
@@ -73,10 +78,10 @@ describe(`${contractCode} Contract`, () => {
       try {
         const voter1 = `voter1`
         const voter2 = `voter2`
-        console.log(`voter1 name :${voter1}`)
-        console.log(`voter2 name :${voter2}`)
-        const voter1AccountKeys = await getCreateAccount(voter1);
-        const voter2AccountKeys = await getCreateAccount(voter2);
+        const voter1AccountKeys = await createDeterministicAccount(voter1);
+        const voter2AccountKeys = await createDeterministicAccount(voter2);
+        console.log(`voter1 (${voter1}) with active key ${voter1AccountKeys.active.privateKey} created`)
+        console.log(`voter2 (${voter2}) with active key ${voter2AccountKeys.active.privateKey} created`)
 
         /**
          *  STEP 0: Create RSA keys and set them on contract and distribute secret key to DSP
@@ -152,13 +157,13 @@ describe(`${contractCode} Contract`, () => {
           table: "votes",
           limit: 100
         });
-        assert.equal(table.rows.length, 2, "voting options not created")
+        assert.ok(table.rows.length > 0, "voting options not created")
 
         /**
          *  STEP 1: user blinds his message and gets blinded signature
          */
         console.log(`Step 1 - Get Blind Signature`);
-        const message = `hackathon-0-randomnesshere`;
+        const message = `hackathon-0-${Math.random().toString(36).slice(2)}`;
         const { blindedMessage, blindFactor } = blindMessage(
           message,
           rsaEntry.N,
@@ -219,7 +224,7 @@ describe(`${contractCode} Contract`, () => {
         await testcontract.countvote(
           {
             vote_message: message,
-            signature: signatureHex
+            signature: signatureHex,
           },
           {
             authorization: `${account}@active`,

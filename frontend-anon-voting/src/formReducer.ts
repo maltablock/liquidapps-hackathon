@@ -1,5 +1,3 @@
-import { loadingIndicatorCSS } from "react-select/src/components/indicators"
-
 type FORM_TYPES = `login` | `requestvote` | `requestvoteresult` | `countvote`
 type TAction = { type: string, payload?: any }
 

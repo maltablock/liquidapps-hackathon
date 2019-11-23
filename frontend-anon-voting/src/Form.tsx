@@ -1,8 +1,10 @@
 import React, { Fragment } from "react";
 import styled from "styled-components";
+import { observer } from 'mobx-react';
 import formReducer, { initialFormState } from "./formReducer";
 import Select from "react-select";
 import Button from "./Button";
+import { useStore } from "./store/useStore";
 
 const loginOptions = [
   { value: "voter1", label: "Voter 1" },
@@ -17,7 +19,7 @@ const voteOptions = [
 const FormWrapper = styled.form`
   width: 450px;
   max-width: 450px;
-  background-color: #d3d3dbdd;
+  background-color: #d3d3dbea;
   border-radius: 4px;
   padding: 16px 48px 16px 48px;
 `;
@@ -41,6 +43,11 @@ const Label = styled.label`
   display: inline-block;
   font-weight: 600;
 `
+const Error = styled.div`
+  display: block;
+  font-weight: 600;
+  color: red;
+`
 
 const Input = styled.input`
 width: 100%;
@@ -59,16 +66,16 @@ margin: 0 0 12px 0;
 `;
 
 const Form: React.FC<{}> = props => {
-  const [state, dispatch] = React.useReducer(formReducer, initialFormState);
+  const store = useStore(rootStore => rootStore);
 
   const renderLogin = () => {
     return (
       <React.Fragment>
         <h3>Test User Login</h3>
         <Select
-          value={state.login.selectedValue}
+          value={store.formState.login.selectedValue as any}
           onChange={(selectedOption: any) =>
-            dispatch({ type: `login/select`, payload: selectedOption })
+            store.dispatch({ type: `login/select`, payload: selectedOption })
           }
           options={loginOptions}
         />
@@ -84,9 +91,9 @@ const Form: React.FC<{}> = props => {
       <React.Fragment>
         <h3>Request Vote Anonymously</h3>
         <Select
-          value={state.requestvote.selectedValue}
+          value={store.formState.requestvote.selectedValue as any}
           onChange={(selectedOption: any) =>
-            dispatch({ type: `requestvote/select`, payload: selectedOption })
+            store.dispatch({ type: `requestvote/select`, payload: selectedOption })
           }
           options={voteOptions}
         />
@@ -104,11 +111,11 @@ const Form: React.FC<{}> = props => {
         <div>
           <Label>Vote Message:</Label>
           <HexDisplay>
-            ffffffffffffffffffffffffffffffffffffffffffffffff
+            {store.formState.requestvoteresult.message}
           </HexDisplay>
           <Label>Signaure:</Label>
           <HexDisplay>
-            000000000000000000000000000000000000000000000000
+            {store.formState.requestvoteresult.signatureHex}
           </HexDisplay>
         </div>
       </React.Fragment>
@@ -124,17 +131,17 @@ const Form: React.FC<{}> = props => {
           <Label>Vote Message</Label>:
           <Input
             type="text"
-            value={state.countvote.message}
+            value={store.formState.countvote.message}
             onChange={evt =>
-              dispatch({ type: `countvote/message`, payload: evt.target.value })
+              store.dispatch({ type: `countvote/message`, payload: evt.target.value })
             }
           />
           <Label>Vote Signature</Label>:
           <Input
             type="text"
-            value={state.countvote.signature}
+            value={store.formState.countvote.signatureHex}
             onChange={evt =>
-              dispatch({ type: `countvote/signature`, payload: evt.target.value })
+              store.dispatch({ type: `countvote/signature`, payload: evt.target.value })
             }
           />
         </div>
@@ -143,30 +150,34 @@ const Form: React.FC<{}> = props => {
           type="button"
           onClick={e => {
             e.preventDefault();
-            dispatch({ type: `countvote/submit` });
+            store.dispatch({ type: `countvote/submit` });
           }}
+          disabled={store.formState.countvote.success}
           margin="8px 0"
         >
-          Cast Anonymous Vote
+          {store.formState.countvote.success ? `Sucess` : `Cast Anonymous Vote`}
         </Button>
       </Fragment>
     );
   };
+
   return (
     <FormWrapper
       onSubmit={e => {
         e.preventDefault();
-        dispatch({ type: `${state.type}/submit` });
+        store.dispatch({ type: `${store.formState.type}/submit` });
       }}
     >
-      {state.type === `login`
+      {store.formState.type === `login`
         ? renderLogin()
-        : state.type === `requestvote`
+        : store.formState.type === `requestvote`
         ? renderRequestVote()
         : renderRequestVoteResult()}
       {renderCastVote()}
+      {store.formState.error ? <Error>{store.formState.error}</Error>: null}
     </FormWrapper>
   );
 };
 
-export default Form;
+
+export default observer(Form);
