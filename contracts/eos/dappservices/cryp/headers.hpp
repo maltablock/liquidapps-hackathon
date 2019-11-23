@@ -126,4 +126,12 @@ static void updateCRYPResult(std::vector<char> uri, name provider,
     std::vector<char> idUri(s.begin(), s.end());                               \
     auto res = _call_cryp_fn(idUri, payload, combinator);                      \
     return unpack<RES_T>(res);                                                 \
-  }
+  } \
+struct bsign_get_signature_input { \
+  name request_id;\
+  std::vector<char> secret_key_encrypted;\
+  std::vector<char> blinded_message;\
+};\
+struct bsign_get_signature_result {\
+  std::vector<char> blind_signature;\
+};

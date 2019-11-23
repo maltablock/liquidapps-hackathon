@@ -19,7 +19,7 @@ inline std::vector<std::string> parse_vote_message(const std::string& memo) {
       results.emplace_back(start, it);
       start = it + 1;
     }
-  }
+  } 
   if (start != end) results.emplace_back(start, end);
 
   return results;
@@ -120,16 +120,7 @@ ACTION createpoll(name poll_name, const std::vector<std::string> &options,
   }
 }
 
-struct bsign_get_signature_input {
-  name request_id;
-  std::vector<char> secret_key_encrypted;
-  std::vector<char> blinded_message;
-};
-struct bsign_get_signature_result {
-  std::vector<char> blind_signature;
-};
 static void bsign_get_signature(const bsign_get_signature_input &input) {
-  // eosio::print("\nbefore call_cryp_fn\n");
   auto res = call_cryp_fn<bsign_get_signature_result>(
       name("bsigngetsign"), pack(input), [&](auto &results) {
         eosio::print("\nin combinator\n");
@@ -138,17 +129,14 @@ static void bsign_get_signature(const bsign_get_signature_input &input) {
         eosio::print("\nend combinator\n");
         return results[0].result;
       });
-  // eosio::print("\nafter call_cryp_fn\n");
 
   auto _self = name(current_receiver());
   bsign_entries_t entries(_self, _self.value);
-  // eosio::print("\nbefore emplace call_cryp_fn\n");
   entries.emplace(_self, [&](auto &e) {
     e.request_id = input.request_id;
     e.blinded_message = input.blinded_message;
     e.blind_signature = res.blind_signature;
   });
-  // eosio::print("\nafter emplace call_cryp_fn\n");
 };
 
 struct bsign_verify_signature_input {
@@ -161,7 +149,6 @@ struct bsign_verify_signature_result {
   uint64_t is_valid;
 };
 static bool bsign_verify_signature(const bsign_verify_signature_input &input) {
-  // eosio::print("\nbefore call_cryp_fn\n");
   auto res = call_cryp_fn<bsign_verify_signature_result>(
       name("bsignverify"), pack(input), [&](auto &results) {
         eosio::check(results.size() > 0, "not enough results");
