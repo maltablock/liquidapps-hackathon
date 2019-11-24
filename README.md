@@ -1,5 +1,7 @@
 # LiquidCrypto
 
+> 📹 Check the video walkthrough of our [anonymous e-voting protocol](https://streamable.com/wiqgp)
+
 ## Development
 
 Bootstrapped with [zeus-sdk](https://docs.liquidapps.io/en/stable/developers/zeus-getting-started.html).
@@ -10,7 +12,8 @@ Bootstrapped with [zeus-sdk](https://docs.liquidapps.io/en/stable/developers/zeu
 npm install -g @liquidapps/zeus-cmd
 ```
 
-Only way to do it consistently right now is by bootstrapping with a different service and then manually merging this repo:
+I'm on Mac and could not deploy the zeus box due to a bug.
+Only way to test a service consistently right now is by bootstrapping with a different service and then manually merging the files of this repo:
 
 ```bash
 # clone this repo somewhere
@@ -26,7 +29,10 @@ zeus unbox vcpu-dapp-service --no-create-dir
 # And add a CMakeLists.txt to contracts/eos/cryptoconsumer
 ```
 
-### Testing
+### Testing & Deploying
+
+To run the smart contract tests and also set up the second test voter, we can just run the tests.
+After the tests ran, the DSP node is still kept alive.
 
 ```bash
 zeus compile
@@ -34,23 +40,11 @@ npm run test-crypto
 ```
 
 
-# vCPU Notes
+The React frontend in `frontend-anon-voting` can be run with:
 
 ```
-ACTION vcpuconsumer/vcpuconsumer.cpp::testfn(input)
-  -> dappservices/vcpu/headers.hpp::call_vcpu_fn("gcd", input, combinator)
-    -> dappservices/vcpu/headers.hpp::_call_vcpu_fn(uri, input, combinator)
-      -> SEND_SVC_REQUEST(vrun, uri, input);
-
-/services/vcpu-dapp-service-node/chain/vrun.js
-  -> dappservices/vcpu/cmds/vrun.hpp::vrun
-    -> dappservices/vcpu/headers.hpp::updateVCPUResult
-      -> enters result into vcpuentries_t
-
-DSP retries initial action
-ACTION vcpuconsumer/vcpuconsumer.cpp::testfn(input)
-  -> dappservices/vcpu/headers.hpp::call_vcpu_fn("gcd", input, combinator)
-    -> dappservices/vcpu/headers.hpp::_call_vcpu_fn(uri, input, combinator)
-      -> dappservices/vcpu/headers.hpp::_vcpu_extractResults(vcpuentry, combinator)
-  -> can now work with result
+cd frontend-anon-voting
+npm i
+npm start
 ```
+
