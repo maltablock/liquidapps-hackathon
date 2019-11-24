@@ -20,30 +20,6 @@ ExternalProject_Add(
                BUILD_ALWAYS 1
             )
 
-ExternalProject_Add(
-               vcpuservice
-               SOURCE_DIR vcpuservice
-               BINARY_DIR vcpuservice
-               CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${EOSIO_CDT_ROOT}/lib/cmake/eosio.cdt/EosioWasmToolchain.cmake
-               UPDATE_COMMAND ""
-               PATCH_COMMAND ""
-               TEST_COMMAND ""
-               INSTALL_COMMAND ""
-               BUILD_ALWAYS 1
-            )
-
-ExternalProject_Add(
-               vcpuconsumer
-               SOURCE_DIR vcpuconsumer
-               BINARY_DIR vcpuconsumer
-               CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${EOSIO_CDT_ROOT}/lib/cmake/eosio.cdt/EosioWasmToolchain.cmake
-               UPDATE_COMMAND ""
-               PATCH_COMMAND ""
-               TEST_COMMAND ""
-               INSTALL_COMMAND ""
-               BUILD_ALWAYS 1
-            )
-
 
 ExternalProject_Add(
                crypservice

@@ -1,6 +1,6 @@
 # LiquidCrypto
 
-> 📹 Check the video walkthrough of our [anonymous e-voting protocol](https://streamable.com/wiqgp)
+> 🎥 Check the video walkthrough of our [anonymous e-voting protocol](https://streamable.com/wiqgp)
 
 ## Development
 
@@ -27,6 +27,9 @@ zeus unbox vcpu-dapp-service --no-create-dir
 # manually merge this repo to the liquid-crypto dir
 # Add cryptoconsumer project to contracts/eos/CMakeLists.txt
 # And add a CMakeLists.txt to contracts/eos/cryptoconsumer
+# remove model/dapp-services/vcpu.json
+
+npm i
 ```
 
 ### Testing & Deploying

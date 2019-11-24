@@ -7,7 +7,6 @@
     "test-ci": "mocha --require babel-core/register --require=dotenv/config --require babel-polyfill --exit --timeout 1000000 --reporter mocha-junit-and-console-reporter --reporter-options mochaFile=./test-reports/junit.xml --color",
     "test": "mocha --require babel-core/register --require=dotenv/config --require babel-polyfill --exit --timeout 1000000 --color",
     "test-crypto": "zeus test test/cryptoconsumer.spec.js --compile-all=0",
-    "test-vcpu": "zeus test test/vcpuconsumer.spec.js --compile-all=0",
     "preinstall": ""
   },
   "author": "",
